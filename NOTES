@@ -1,18 +1,37 @@
 https://console.developers.google.com/
 
-composer require google/apiclient
+
+/etc/jitsi/meet/jitsi.pacew.org.crt
+
+/etc/prosody/certs/auth.jitsi.pacew.org.crt
+/etc/prosody/certs/jitsi.pacew.org.crt
+
+/etc/prosody/certs/localhost.crt
+
+/var/lib/prosody/auth.jitsi.pacew.org.crt
+/var/lib/prosody/jitsi.pacew.org.crt
+
+./apache2/sites-available/jitsi.pacew.org.conf:  SSLCertificateFile /etc/jitsi/meet/jitsi.pacew.org.crt
+./apache2/sites-enabled/jitsi.pacew.org.conf:  SSLCertificateFile /etc/jitsi/meet/jitsi.pacew.org.crt
 
 
-https://console.cloud.google.com/home/dashboard?folder=&organizationId=&project=meet-278902
 
-google-site-verification=7JL-Cfl_oVgyZyTtSxMjJiX2B-PnVlWBbgs3dKEVcJA
+/etc/jitsy
+/etc/prosody
+/var/lib/prosody
 
-google auth
+certs are all in this file
+/etc/prosody/conf.avail/jitsi.pacew.org.cfg.lua
+/etc/prosody/conf.d/jitsi.pacew.org.cfg.lua
 
-client id
 
-235586806905-2c00tagcgfleue2q2kmh074quhaqgcks.apps.googleusercontent.com
 
-client secret
 
-ytWzNaYkDr8go3dedy6mELJY
+ "/etc/prosody/certs/jitsi.pacew.org.crt";
+ "/etc/prosody/certs/auth.jitsi.pacew.org.crt";
+
+ "/etc/prosody/certs/jitsi.pacew.org.key";
+ "/etc/prosody/certs/auth.jitsi.pacew.org.key";
+
+links from /etc/prosody/certs/* to /var/lib/prosody/*
+

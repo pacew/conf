@@ -6,6 +6,8 @@ import subprocess
 import shlex
 import re
 
+jhost = "jitsi.pacew.org"
+
 yes_flag = False
 
 def run(str):
@@ -37,25 +39,91 @@ def setup_apt_sources():
         run(cmd)
         run("sudo apt update")
 
-def setup_certs():
-    if False and not os.path.isfile("/etc/ssl/meet.pacew.org.crt"):
-        run(("sudo cp /etc/apache2/wildcard.pacew.org.key"
-             " /etc/ssl/meet.pacew.org.key"))
-        run(("sudo cp /etc/apache2/wildcard.pacew.org.crt"
-             " /etc/ssl/meet.pacew.org.crt"))
+def kill_file(name):
+    if os.path.isfile(name) or os.path.islink(name):
+        run(f"sudo rm -f {name}")
 
-    want = open("/etc/apache2/wildcard.pacew.org.crt").read()
-    try:
-        have = open("/etc/jitsi/meet/meet.pacew.org.crt").read()
-    except:
-        have = ""
+def cleanup_certs():
+    if not os.access("/etc/prosody/certs", os.R_OK):
+        run("sudo chmod a+rx /etc/prosody/certs")
+        sys.exit(1)
+    kill_file("/etc/prosody/certs/localhost.crt")
+    kill_file("/etc/prosody/certs/localhost.key")
 
-    if want != have:
-        run(("sudo cp /etc/apache2/wildcard.pacew.org.key"
-             " /etc/jitsi/meet/meet.pacew.org.key"))
-        run(("sudo cp /etc/apache2/wildcard.pacew.org.crt"
-             " /etc/jitsi/meet/meet.pacew.org.crt"))
+    kill_file(f"/etc/prosody/certs/{jhost}.crt")
+    kill_file(f"/etc/prosody/certs/{jhost}.key")
+    kill_file(f"/etc/prosody/certs/auth.{jhost}.crt")
+    kill_file(f"/etc/prosody/certs/auth.{jhost}.key")
+
+    if not os.access("/var/lib/prosody", os.R_OK):
+        run("sudo chmod a+rx /var/lib/prosody")
+        sys.exit(1)
+
+    kill_file(f"/var/lib/prosody/{jhost}.crt")
+    kill_file(f"/var/lib/prosody/{jhost}.key")
+    kill_file(f"/var/lib/prosody/auth.{jhost}.crt")
+    kill_file(f"/var/lib/prosody/auth.{jhost}.key")
         
+    kill_file(f"/etc/jitsi/meet/{jhost}.crt")
+    kill_file(f"/etc/jitsi/meet/{jhost}.key")
+
+def replace(str, a, b):
+    return re.sub(a, b, str)
+
+
+def fix_prosody_cfg():
+    file = f"/etc/prosody/conf.avail/{jhost}.cfg.lua"
+    with open(file) as inf:
+        cfg = inf.read()
+
+    orig_cfg = cfg
+
+    cfg = replace(cfg, 
+                  f"/etc/prosody/certs/{jhost}.key",
+                  "/etc/apache2/wildcard.pacew.org.key")
+    cfg = replace(cfg, 
+                  f"/etc/prosody/certs/{jhost}.crt",
+                  "/etc/apache2/wildcard.pacew.org.crt")
+    cfg = replace(cfg, 
+                  f"/etc/prosody/certs/auth.{jhost}.key",
+                  "/etc/apache2/wildcard.pacew.org.key")
+    cfg = replace(cfg, 
+                  f"/etc/prosody/certs/auth.{jhost}.crt",
+                  "/etc/apache2/wildcard.pacew.org.crt")
+
+    if cfg != orig_cfg:
+        with open("TMP.prosody.cfg.lua", "w") as outf:
+            outf.write(cfg)
+        run(f"sudo cp TMP.prosody.cfg.lua {file}")
+
+def fix_apache_cfg():
+    file = f"/etc/apache2/sites-available/{jhost}.conf"
+    with open(file) as inf:
+        cfg = inf.read()
+
+    orig_cfg = cfg
+
+    cfg = replace(cfg, 
+                  f"/etc/jitsi/meet/{jhost}.key",
+                  "/etc/apache2/wildcard.pacew.org.key")
+    cfg = replace(cfg, 
+                  f"/etc/jitsi/meet/{jhost}.crt",
+                  "/etc/apache2/wildcard.pacew.org.crt")
+
+    if cfg != orig_cfg:
+        with open("TMP.jconf", "w") as outf:
+            outf.write(cfg)
+        run(f"sudo cp TMP.jconf {file}")
+
+def setup_certs():
+    cleanup_certs()
+    
+    if not os.access("/etc/prosody/conf.avail", os.X_OK):
+        run("sudo chmod a+rx /etc/prosody/conf.*")
+
+    fix_prosody_cfg()
+    fix_apache_cfg()
+
 
 def main():
     global yes_flag
@@ -72,12 +140,11 @@ def main():
 
     if not os.path.isdir("/etc/jitsi"):
         print("now run, taking defaults and generating certs")
+        print("you might want the name jitsi.pacew.org")
         print("sudo apt install jitsi-meet")
         sys.exit(0)
 
-#     setup_certs()
-
-    print("see ./NOTES about authentication")
+    setup_certs()
 
 if __name__ == "__main__":
     main()
