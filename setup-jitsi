@@ -1,0 +1,83 @@
+#! /usr/bin/env python3
+
+import sys
+import os
+import subprocess
+import shlex
+import re
+
+yes_flag = False
+
+def run(str):
+    print(str)
+    if yes_flag:
+        ret = subprocess.run(str, 
+                             shell=True, 
+                             stdin = subprocess.DEVNULL,
+                             encoding = "utf8")
+        if ret.returncode != 0:
+            print("exit code", ret.returncode)
+            sys.exit(1)
+
+keyring_basename = "jitsi-keyring.gpg"
+keyring_dir = "/usr/share/keyrings"
+keyring = os.path.join (keyring_dir, keyring_basename)
+
+jitsi_stable_list = "/etc/apt/sources.list.d/jitsi-stable.list"
+
+def setup_keyring():
+    if not os.path.isfile(keyring):
+        run(f"sudo cp {keyring_basename} {keyring}")
+
+def setup_apt_sources():
+    if not os.path.isfile(jitsi_stable_list):
+        text = f"deb [signed-by={keyring}] https://download.jitsi.org stable/"
+        cmd = ("echo {} | sudo tee {} > /dev/null"
+               .format(shlex.quote(text), jitsi_stable_list))
+        run(cmd)
+        run("sudo apt update")
+
+def setup_certs():
+    if False and not os.path.isfile("/etc/ssl/meet.pacew.org.crt"):
+        run(("sudo cp /etc/apache2/wildcard.pacew.org.key"
+             " /etc/ssl/meet.pacew.org.key"))
+        run(("sudo cp /etc/apache2/wildcard.pacew.org.crt"
+             " /etc/ssl/meet.pacew.org.crt"))
+
+    want = open("/etc/apache2/wildcard.pacew.org.crt").read()
+    try:
+        have = open("/etc/jitsi/meet/meet.pacew.org.crt").read()
+    except:
+        have = ""
+
+    if want != have:
+        run(("sudo cp /etc/apache2/wildcard.pacew.org.key"
+             " /etc/jitsi/meet/meet.pacew.org.key"))
+        run(("sudo cp /etc/apache2/wildcard.pacew.org.crt"
+             " /etc/jitsi/meet/meet.pacew.org.crt"))
+        
+
+def main():
+    global yes_flag
+    
+    if not os.path.isfile("/etc/apache2/wildcard.pacew.org.crt"):
+        print("need to push the wildcard first")
+        sys.exit(1)
+
+    if len(sys.argv) > 1 and sys.argv[1] == "-y":
+        yes_flag = True
+
+    setup_keyring()
+    setup_apt_sources()
+
+    if not os.path.isdir("/etc/jitsi"):
+        print("now run, taking defaults and generating certs")
+        print("sudo apt install jitsi-meet")
+        sys.exit(0)
+
+#     setup_certs()
+
+    print("see ./NOTES about authentication")
+
+if __name__ == "__main__":
+    main()
