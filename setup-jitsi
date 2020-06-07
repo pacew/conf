@@ -71,29 +71,31 @@ def replace(str, a, b):
     return re.sub(a, b, str)
 
 
+wildcard_key = "/etc/apache2/wildcard.pacew.org.key"
+wildcard_crt = "/etc/apache2/wildcard.pacew.org.crt"
+
 def fix_prosody_cfg():
+
     file = f"/etc/prosody/conf.avail/{jhost}.cfg.lua"
     with open(file) as inf:
         cfg = inf.read()
 
     orig_cfg = cfg
 
-    cfg = replace(cfg, 
-                  f"/etc/prosody/certs/{jhost}.key",
-                  "/etc/apache2/wildcard.pacew.org.key")
-    cfg = replace(cfg, 
-                  f"/etc/prosody/certs/{jhost}.crt",
-                  "/etc/apache2/wildcard.pacew.org.crt")
-    cfg = replace(cfg, 
-                  f"/etc/prosody/certs/auth.{jhost}.key",
-                  "/etc/apache2/wildcard.pacew.org.key")
-    cfg = replace(cfg, 
-                  f"/etc/prosody/certs/auth.{jhost}.crt",
-                  "/etc/apache2/wildcard.pacew.org.crt")
+    cfg = re.sub(r"^(\s*)key\s*=.*$", 
+                 f'\\1key = "{wildcard_key}";', 
+                 cfg, 
+                 flags=re.MULTILINE)
+
+    cfg = re.sub(r"^(\s*)certificate\s*=.*$", 
+                 f'\\1certificate = "{wildcard_crt}";', 
+                 cfg, 
+                 flags=re.MULTILINE)
+
+    with open("TMP.prosody.cfg.lua", "w") as outf:
+        outf.write(cfg)
 
     if cfg != orig_cfg:
-        with open("TMP.prosody.cfg.lua", "w") as outf:
-            outf.write(cfg)
         run(f"sudo cp TMP.prosody.cfg.lua {file}")
 
 def fix_apache_cfg():
