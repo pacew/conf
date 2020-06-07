@@ -1,5 +1,10 @@
+https://community.jitsi.org/t/get-the-list-of-rooms/14895/56
+
 prosody data store is files in /var/lib/prosody
 data store includes passwords
+>r = muc:room("admin3@conference.jitsi.pacew.org")
+
+
 
 https://prosody.im/doc/developers/muc
 

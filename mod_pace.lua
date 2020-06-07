@@ -10,7 +10,7 @@ end
 
 local function pace_block(room)
    return nil
-
+end
 
 
 module:hook("presence/full", function(event)

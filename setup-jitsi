@@ -92,10 +92,11 @@ def fix_prosody_cfg():
                  cfg, 
                  flags=re.MULTILINE)
 
-    cfg = re.sub (r'^(.*)("speakerstats".*)$',
-                  '\\1\\2\n\\1"pace";',
-                  cfg,
-                  flags=re.MULTILINE)
+    if not re.search ('"pace"', cfg):
+        cfg = re.sub (r'^(.*)("speakerstats".*)$',
+                      '\\1\\2\n\\1"pace";',
+                      cfg,
+                      flags=re.MULTILINE)
 
     with open("TMP.prosody.cfg.lua", "w") as outf:
         outf.write(cfg)

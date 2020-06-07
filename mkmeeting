@@ -1,0 +1,35 @@
+#! /usr/bin/env python3
+
+import hmac
+import base64
+import secrets
+import re
+
+
+secret = "xyzzy"
+
+def mkmeeting(secret):
+    msg = secrets.token_bytes(10)
+    h = hmac.new(bytes(secret, 'utf-8'), msg, 'sha256').digest()
+    h = h[:8]
+
+    name_bytes = msg + h
+    return str(base64.urlsafe_b64encode(name_bytes), 'utf-8')
+
+def ckmeeting(room_b64, secret):
+    room_b64 = re.sub(r'-', '+', room_b64)
+    room_b64 = re.sub(r'_', '/', room_b64)
+    room = base64.b64decode(room_b64)
+    msg = room[0:10]
+    received = room[10:]
+    
+    computed = hmac.new(bytes(secret, 'utf-8'), msg, 'sha256').digest()
+    computed = computed[:8]
+    
+    return hmac.compare_digest (received, computed)
+    
+m = mkmeeting(secret)
+print(m)
+
+print(ckmeeting(m, secret))
+
