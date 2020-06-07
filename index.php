@@ -2,9 +2,6 @@
 
 require_once (__DIR__ . "/vendor/autoload.php");
 
-use \Firebase\JWT\JWT;
-
-
 require_once("app.php");
 
 
@@ -19,20 +16,28 @@ $body .= "</div>\n";
 $body .= "<p>hello</p>\n";
 
 
+function put_google_login_button() {
+    global $extra_head;
+    global $google_client_id;
+    
+    $extra_head .= sprintf ("<meta name='google-signin-client_id'"
+        ." content='%s' />\n", urlencode($google_client_id));
+    $extra_head .= "<script src='https://apis.google.com/js/platform.js'"
+                ." async defer></script>";
 
-$key = "example_key";
-$payload = array(
-    "iss" => "http://example.org",
-    "aud" => "http://example.com",
-    "iat" => 1356999524,
-    "nbf" => 1357000000
-);
+    global $body;
+    $body .= "<button id='login'>google login</button>";
+    $body .= '<div class="g-signin2" data-onsuccess="onSignIn"></div>';
+}
 
-$jwt = JWT::encode($payload, $key);
-var_dump ($jwt);
-$decoded = JWT::decode($jwt, $key, array('HS256'));
+if (($login_email = getsess ("login_email")) == "") {
+    put_google_login_button ();
+    pfinish ();
+}
 
-var_dump ($decoded);
+$body .= "<div>\n";
+$body .= sprintf ("logged in as %s ", h($login_email));
+$body .= "</div>\n";
 
 
 pfinish ();

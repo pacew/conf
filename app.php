@@ -5,6 +5,9 @@ ini_set ("pcre.jit", 0);
 
 require_once ($_SERVER['PSITE_PHP']);
 
+// https://console.developers.google.com -> credentials 
+$google_client_id = "235586806905-oklr5ngeqev7fjm9sva080a9lv20ni18.apps.googleusercontent.com";
+
 if (! @$cli_mode 
     && @$_SERVER['HTTPS'] == "" 
     && @$cfg['ssl_url'] != "") {
@@ -16,7 +19,7 @@ if (! @$cli_mode
 }
 
 
-$title_html = "portfolio";
+$title_html = "conference";
 $username = "";
 
 function pstart () {
@@ -45,6 +48,8 @@ function pstart () {
 		$body .= "</div>\n";
 	}
 }
+
+$extra_head = "";
 
 function pfinish () {
     $pg = "";
@@ -78,6 +83,9 @@ function pfinish () {
     $pg .= "</script>\n";
 
 
+    global $extra_head;
+    $pg .= $extra_head;
+
     $pg .= "</head>\n";
     
     $pg .= "<body>\n";
@@ -95,6 +103,7 @@ function pfinish () {
 
     $pg .= "</div>\n";
 
+
     $pg .= sprintf ("<script src='scripts.js?c=%s.js'></script>\n",
                     get_cache_defeater ());
 
@@ -109,7 +118,6 @@ function pfinish () {
     $pg .= "</body>\n";
     $pg .= "</html>\n";
     echo ($pg);
-
 
     do_commits ();
     exit (0);
