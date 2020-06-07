@@ -83,9 +83,24 @@ local hashes = require "util.hashes";
 local base64_encode = require "util.encodings".base64.encode;
 local base64_decode = require "util.encodings".base64.decode;
 
-key = "xyzzy";
-msg = "hello"
+rname = "3HqemGNzX77xl7HY_4pkoz6a";
+rname = "YWJjZGVhYmNkZfk4oelhwY2n";
 
-h = base64_encode (hashes.hmac_sha256(key, msg));
+secret = "xyzzy";
 
-module:log("error", "** hash %s", h);
+rname = string.gsub(rname, "_", "/")
+rname = string.gsub(rname, "-", "+")
+
+raw = base64_decode(rname)
+msg = string.sub(raw, 1, 10)
+received = string.sub(raw, 11)
+
+computed = hashes.hmac_sha256(secret, msg);
+computed = string.sub(computed, 1, 8)
+
+
+if received == computed then
+   module:log("error", "** match", computed);
+else
+   module:log("error", "** bad", computed);
+end
