@@ -105,16 +105,20 @@ def fix_apache_cfg():
 
     orig_cfg = cfg
 
-    cfg = replace(cfg, 
-                  f"/etc/jitsi/meet/{jhost}.key",
-                  "/etc/apache2/wildcard.pacew.org.key")
-    cfg = replace(cfg, 
-                  f"/etc/jitsi/meet/{jhost}.crt",
-                  "/etc/apache2/wildcard.pacew.org.crt")
+    cfg = re.sub(r"^(\s*SSLCertificateKeyFile\s*).*$",
+                 f'\\1{wildcard_key}',
+                 cfg, 
+                 flags=re.MULTILINE)
+
+    cfg = re.sub(r"^(\s*SSLCertificateFile\s*).*$",
+                 f'\\1{wildcard_crt}',
+                 cfg, 
+                 flags=re.MULTILINE)
+
+    with open("TMP.jconf", "w") as outf:
+        outf.write(cfg)
 
     if cfg != orig_cfg:
-        with open("TMP.jconf", "w") as outf:
-            outf.write(cfg)
         run(f"sudo cp TMP.jconf {file}")
 
 def setup_certs():
