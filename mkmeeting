@@ -9,9 +9,9 @@ import re
 secret = "xyzzy"
 
 def mkmeeting(secret):
-    msg = secrets.token_bytes(10)
+    msg = secrets.token_bytes(6)
     h = hmac.new(bytes(secret, 'utf-8'), msg, 'sha256').digest()
-    h = h[:8]
+    h = h[:6]
 
     name_bytes = msg + h
 
@@ -20,11 +20,11 @@ def mkmeeting(secret):
 def ckmeeting(room_hex, secret):
     room = bytearray.fromhex(room_hex)
     print("raw", room)
-    msg = room[0:10]
-    received = room[10:]
+    msg = room[0:6]
+    received = room[6:]
     
     computed = hmac.new(bytes(secret, 'utf-8'), msg, 'sha256').digest()
-    computed = computed[:8]
+    computed = computed[:6]
     
     return hmac.compare_digest (received, computed)
     

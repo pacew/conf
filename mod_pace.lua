@@ -27,11 +27,11 @@ local function valid_room(name_hex, secret)
    status, raw = pcall (function () return fromhex(name_hex) end);
 
    if status then
-      msg = string.sub(raw, 1, 10)
-      received = string.sub(raw, 11)
+      msg = string.sub(raw, 1, 6)
+      received = string.sub(raw, 7)
 
       computed = hashes.hmac_sha256(secret, msg);
-      computed = string.sub(computed, 1, 8)
+      computed = string.sub(computed, 1, 6)
 
       return received == computed
    else
