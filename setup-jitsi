@@ -92,6 +92,11 @@ def fix_prosody_cfg():
                  cfg, 
                  flags=re.MULTILINE)
 
+    cfg = re.sub (r'^(.*)("speakerstats".*)$',
+                  '\\1\\2\n\\1"pace";',
+                  cfg,
+                  flags=re.MULTILINE)
+
     with open("TMP.prosody.cfg.lua", "w") as outf:
         outf.write(cfg)
 
@@ -132,7 +137,7 @@ def setup_certs():
 
 def add_extensions():
     pdir = "/usr/share/jitsi-meet/prosody-plugins"
-    name = "mod_muc_restrict_rooms.lua"
+    name = "mod_pace.lua"
     dest = f"{pdir}/{name}"
     if not os.path.exists(dest):
         cmd = f"sudo ln -s `pwd`/{name} {dest}"
