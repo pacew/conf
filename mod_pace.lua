@@ -13,9 +13,37 @@ if not rooms then
         return;
 end
 
-local function pace_block(room)
-   return nil;
+local hashes = require "util.hashes";
+
+function fromhex(str)
+    return (str:gsub('..', function (cc)
+        return string.char(tonumber(cc, 16))
+    end))
 end
+
+local function valid_room(name_hex, secret)
+   module:log("error", "** name_hex %s", name_hex);
+
+   status, raw = pcall (function () return fromhex(name_hex) end);
+
+   if status then
+      msg = string.sub(raw, 1, 10)
+      received = string.sub(raw, 11)
+
+      computed = hashes.hmac_sha256(secret, msg);
+      computed = string.sub(computed, 1, 8)
+
+      return received == computed
+   else
+      module:log("error", "** can't parse room", name_hex);
+   end
+      
+end
+
+--x = valid_room ('61626364656162636465f938a1e961c18da7', "xyzzy")
+--module:log("error", "** test %s", x);
+--x = valid_room ('admin3', "xyzzy")
+--module:log("error", "** test %s", x);
 
 
 function indent(level)
@@ -61,46 +89,24 @@ module:hook("presence/full", function(event)
         end
 
 	-- Get the room
-	local room = jid.split(stanza.attr.to);
-        if not room then return; end
+	local rname = jid.split(stanza.attr.from);
+        if not rname then return; end
 
-        module:log("error", "** stanza.attr.from %s", stanza.attr.from);
-        module:log("error", "** stanza.attr.to %s", stanza.attr.to);
+        module:log("error", "** room %s", rname);
 
-	if pace_block(room) then
-                event.allowed = false;
-                event.stanza.attr.type = 'error';
-	        return event.origin.send(
-		   st.error_reply(event.stanza, 
-				  "cancel", 
-				  "forbidden", 
-				  "invalid room name"));
-        end
+	if valid_room(rname, "xyzzy") then
+	   module:log("error", "** good room %s", rname);
+	   return
+	end
+	   
+	module:log("error", "** bad room %s", rname);
+
+	event.allowed = false;
+	event.stanza.attr.type = 'error';
+	return event.origin.send(
+	   st.error_reply(event.stanza, 
+			  "cancel", 
+			  "forbidden", 
+			  "invalid room name"));
 end, 10);
 
-module:log("error", "** hello");
-local hashes = require "util.hashes";
-local base64_encode = require "util.encodings".base64.encode;
-local base64_decode = require "util.encodings".base64.decode;
-
-rname = "3HqemGNzX77xl7HY_4pkoz6a";
-rname = "YWJjZGVhYmNkZfk4oelhwY2n";
-
-secret = "xyzzy";
-
-rname = string.gsub(rname, "_", "/")
-rname = string.gsub(rname, "-", "+")
-
-raw = base64_decode(rname)
-msg = string.sub(raw, 1, 10)
-received = string.sub(raw, 11)
-
-computed = hashes.hmac_sha256(secret, msg);
-computed = string.sub(computed, 1, 8)
-
-
-if received == computed then
-   module:log("error", "** match", computed);
-else
-   module:log("error", "** bad", computed);
-end

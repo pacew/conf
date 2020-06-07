@@ -10,20 +10,16 @@ secret = "xyzzy"
 
 def mkmeeting(secret):
     msg = secrets.token_bytes(10)
-    msg = bytes("abcdeabcde",'utf-8')
     h = hmac.new(bytes(secret, 'utf-8'), msg, 'sha256').digest()
     h = h[:8]
 
-    for i in range(8):
-        print(h[i])
-
     name_bytes = msg + h
-    return str(base64.urlsafe_b64encode(name_bytes), 'utf-8')
 
-def ckmeeting(room_b64, secret):
-    room_b64 = re.sub(r'-', '+', room_b64)
-    room_b64 = re.sub(r'_', '/', room_b64)
-    room = base64.b64decode(room_b64)
+    return name_bytes.hex()
+
+def ckmeeting(room_hex, secret):
+    room = bytearray.fromhex(room_hex)
+    print("raw", room)
     msg = room[0:10]
     received = room[10:]
     
@@ -34,6 +30,8 @@ def ckmeeting(room_b64, secret):
     
 m = mkmeeting(secret)
 print(m)
+url = f"https://jitsi.pacew.org/{m}"
+print(url)
 
 print(ckmeeting(m, secret))
 
