@@ -15,14 +15,26 @@ end
 
 local hashes = require "util.hashes";
 
+local function dbg(str)
+      module:log("error", "** " .. str)
+end
+
 function fromhex(str)
     return (str:gsub('..', function (cc)
         return string.char(tonumber(cc, 16))
     end))
 end
 
-local function valid_room(name_hex, secret)
-   module:log("error", "** name_hex %s", name_hex);
+function tohex(buf)
+   ret = ""
+   for i = 1,string.len(buf) do
+      ret = ret .. string.format("%02x", buf:byte(i))
+   end
+   return ret
+end
+
+local function valid_room_old(name_hex, secret)
+   dbg(string.format("name_hex %s", name_hex));
 
    status, raw = pcall (function () return fromhex(name_hex) end);
 
@@ -35,15 +47,28 @@ local function valid_room(name_hex, secret)
 
       return received == computed
    else
-      module:log("error", "** can't parse room", name_hex);
+      dbg(string.format("error", "** can't parse room", name_hex));
    end
       
 end
 
---x = valid_room ('61626364656162636465f938a1e961c18da7', "xyzzy")
---module:log("error", "** test %s", x);
---x = valid_room ('admin3', "xyzzy")
---module:log("error", "** test %s", x);
+function valid_room(room_name, secret)
+   parts = string.gmatch(room_name, "[^_]+")
+   name = string.lower(parts(1))
+   sig_hex = parts(2)
+
+   dbg(string.format("name %s  sig %s", name, sig_hex));
+
+   computed = hashes.hmac_sha1(secret, name);
+   computed = tohex(string.sub(computed, 1, 4))
+
+   dbg(string.format("computed %s", computed));
+
+   if computed == sig_hex then
+      return true
+   end
+   return false
+end
 
 
 function indent(level)
@@ -92,14 +117,14 @@ module:hook("presence/full", function(event)
 	local rname = jid.split(stanza.attr.from);
         if not rname then return; end
 
-        module:log("error", "** room %s", rname);
+        dbg(string.format("error", "** room %s", rname));
 
 	if valid_room(rname, "xyzzy") then
-	   module:log("error", "** good room %s", rname);
+	   dbg(string.format("error", "** good room %s", rname));
 	   return
 	end
 	   
-	module:log("error", "** bad room %s", rname);
+	dbg(string.format("error", "** bad room %s", rname));
 
 	event.allowed = false;
 	event.stanza.attr.type = 'error';
@@ -109,4 +134,9 @@ module:hook("presence/full", function(event)
 			  "forbidden", 
 			  "invalid room name"));
 end, 10);
+
+dbg("hello");
+
+x = valid_room("Hello200608_085f738c", "xyzzy");
+dbg(string.format("valid? %s", x));
 

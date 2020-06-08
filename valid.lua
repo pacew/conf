@@ -6,12 +6,22 @@ function fromhex(str)
     end))
 end
 
+function tohex(buf)
+   ret = ""
+   for i = 1,string.len(buf) do
+      ret = ret .. string.format("%02x ", buf:byte(i))
+   end
+   return ret
+end
+
+
 function valid_room(room_name, secret)
    parts = string.gmatch(room_name, "[^_]+")
    name = string.lower(parts(1))
    sig_hex = parts(2)
 
    status, received = pcall (function () return fromhex(sig_hex) end);
+   print(tohex(received))
    if status then
       computed = sha1.hmac(secret, name);
       computed = string.sub(computed, 1, 8)
@@ -23,6 +33,6 @@ function valid_room(room_name, secret)
    return false
 end
 
-val = valid_room("Hello200607_6db1b880", "xyzzy")
+val = valid_room("Hello200608_085f738c", "xyzzy")
 print(val)
 

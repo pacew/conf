@@ -132,6 +132,7 @@ def setup_certs():
     
     if not os.access("/etc/prosody/conf.avail", os.X_OK):
         run("sudo chmod a+rx /etc/prosody/conf.*")
+        sys.exit(1)
 
     fix_prosody_cfg()
     fix_apache_cfg()

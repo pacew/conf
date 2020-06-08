@@ -9,7 +9,7 @@ import datetime
 
 secret = "xyzzy"
 
-def mkmeeting2(basename_raw, secret):
+def mkmeeting(basename_raw, secret):
     # delete all but alnum and dash
     basename = re.sub(r'[^-a-zA-Z0-9]', '', basename_raw)
 
@@ -27,7 +27,7 @@ def mkmeeting2(basename_raw, secret):
     room_name = name + "_" + sig_hex
     return room_name
 
-def ckmeeting2(room_name, secret):
+def ckmeeting(room_name, secret):
     parts = room_name.split('_')
     if len(parts) != 2:
         return False
@@ -60,36 +60,12 @@ def ckmeeting2(room_name, secret):
         return False
 
     return True
-
-
-
-def mkmeeting(secret):
-    msg = secrets.token_bytes(6)
-    h = hmac.new(bytes(secret, 'utf-8'), msg, 'sha256').digest()
-    h = h[:6]
-
-    name_bytes = msg + h
-
-    return name_bytes.hex()
-
-def ckmeeting(room_hex, secret):
-    room = bytearray.fromhex(room_hex)
-    print("raw", room)
-    msg = room[0:6]
-    received = room[6:]
     
-    computed = hmac.new(bytes(secret, 'utf-8'), msg, 'sha256').digest()
-    computed = computed[:6]
-    
-    return hmac.compare_digest (received, computed)
-    
-m = mkmeeting2("Hello", secret)
+m = mkmeeting("Hello", secret)
 print(m)
 url = f"https://jitsi.pacew.org/{m}"
 print(url)
 
-print(ckmeeting2(m, secret))
+print(ckmeeting(m, secret))
 
 
-h = hmac.new(bytes(secret, 'utf-8'), bytes('foo', 'utf-8'), 'sha1').digest()
-print(h.hex())
