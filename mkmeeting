@@ -4,9 +4,64 @@ import hmac
 import base64
 import secrets
 import re
+import datetime
 
 
 secret = "xyzzy"
+
+def mkmeeting2(basename_raw, secret):
+    # delete all but alnum and dash
+    basename = re.sub(r'[^-a-zA-Z0-9]', '', basename_raw)
+
+    today = datetime.date.today()
+    yy = today.year % 100
+    mm = today.month
+    dd = today.day
+
+    name = f"{basename}{yy:02d}{mm:02d}{dd:02d}"
+
+    msg = bytes(name.lower(), 'utf-8')
+    h = hmac.new(bytes(secret, 'utf-8'), msg, 'sha1').digest()
+    sig_hex = h[:4].hex()
+
+    room_name = name + "_" + sig_hex
+    return room_name
+
+def ckmeeting2(room_name, secret):
+    parts = room_name.split('_')
+    if len(parts) != 2:
+        return False
+
+    name = parts[0].lower()
+    sig_hex = parts[1]
+    
+    received = bytearray.fromhex(sig_hex)
+
+    print("hmac", secret, name)
+
+    computed = hmac.new(bytes(secret, 'utf-8'), 
+                        bytes(name, 'utf-8'), 
+                        'sha1').digest()
+    print(computed.hex())
+    computed = computed[:4]
+    
+    if not hmac.compare_digest (received, computed):
+        return False
+
+    parts = re.search(r'.*([0-9][0-9])([0-9][0-9])([0-9][0-9])$', name)
+    yy = int(parts.group(1))
+    mm = int(parts.group(2))
+    dd = int(parts.group(3))
+
+    d = datetime.date(2000+yy, mm, dd)
+    delta = d - datetime.date.today()
+    limit = datetime.timedelta(10)
+    if delta > limit:
+        return False
+
+    return True
+
+
 
 def mkmeeting(secret):
     msg = secrets.token_bytes(6)
@@ -28,10 +83,13 @@ def ckmeeting(room_hex, secret):
     
     return hmac.compare_digest (received, computed)
     
-m = mkmeeting(secret)
+m = mkmeeting2("Hello", secret)
 print(m)
 url = f"https://jitsi.pacew.org/{m}"
 print(url)
 
-print(ckmeeting(m, secret))
+print(ckmeeting2(m, secret))
 
+
+h = hmac.new(bytes(secret, 'utf-8'), bytes('foo', 'utf-8'), 'sha1').digest()
+print(h.hex())

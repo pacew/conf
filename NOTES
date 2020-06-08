@@ -1,3 +1,7 @@
+git clone https://github.com/pacew/conf.git
+
+./setup-jitsi -y
+
 https://community.jitsi.org/t/get-the-list-of-rooms/14895/56
 
 prosody data store is files in /var/lib/prosody
