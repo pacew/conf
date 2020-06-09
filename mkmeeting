@@ -14,6 +14,8 @@ def mkmeeting(secret, basename_arg, duration):
     basename = re.sub(r'[^-a-zA-Z0-9]', '', basename_arg)
 
     today = datetime.date.today()
+    if False:
+        today -= datetime.timedelta(13)
     yy = today.year % 100
     mm = today.month
     dd = today.day

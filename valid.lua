@@ -15,7 +15,7 @@ function tohex(buf)
 end
 
 
-function valid_room(room_name, secret)
+function valid_room(secret, room_name)
    parts = string.gmatch(room_name, "[^_]+")
    name = string.lower(parts(1))
    sig_hex = parts(2)
@@ -26,13 +26,27 @@ function valid_room(room_name, secret)
       computed = sha1.hmac(secret, name);
       computed = string.sub(computed, 1, 8)
 
-      if computed == sig_hex then
-	 return true
+      if computed ~= sig_hex then
+	 return false
       end
    end
-   return false
+
+   print(name)
+   yy, mm, dd, duration = name:match("(..)(..)(..)-([^-]+)")
+   start = os.time{year=2000+yy, month=mm, day=dd}
+   delta = os.time() - start
+   if delta > duration * 86400 then
+      print("expired")
+      return false
+   end
+
+   return true
 end
 
-val = valid_room("Hello200608_085f738c", "xyzzy")
+val = valid_room("xyzzy", "Hello200608-10_4fbc3d3b")
 print(val)
+
+val = valid_room("xyzzy", "Hello200526-10_df6594ed")
+print(val)
+
 
