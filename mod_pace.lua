@@ -19,13 +19,13 @@ local function dbg(str)
       module:log("error", "** " .. str)
 end
 
-function fromhex(str)
+local function fromhex(str)
     return (str:gsub('..', function (cc)
         return string.char(tonumber(cc, 16))
     end))
 end
 
-function tohex(buf)
+local function tohex(buf)
    ret = ""
    for i = 1,string.len(buf) do
       ret = ret .. string.format("%02x", buf:byte(i))
@@ -33,26 +33,8 @@ function tohex(buf)
    return ret
 end
 
-local function valid_room_old(name_hex, secret)
-   dbg(string.format("name_hex %s", name_hex));
 
-   status, raw = pcall (function () return fromhex(name_hex) end);
-
-   if status then
-      msg = string.sub(raw, 1, 6)
-      received = string.sub(raw, 7)
-
-      computed = hashes.hmac_sha256(secret, msg);
-      computed = string.sub(computed, 1, 6)
-
-      return received == computed
-   else
-      dbg(string.format("error", "** can't parse room", name_hex));
-   end
-      
-end
-
-function valid_room(room_name, secret)
+local function valid_room(secret, room_name)
    parts = string.gmatch(room_name, "[^_]+")
    name = string.lower(parts(1))
    sig_hex = parts(2)
@@ -64,10 +46,19 @@ function valid_room(room_name, secret)
 
    dbg(string.format("computed %s", computed));
 
-   if computed == sig_hex then
-      return true
+   if computed ~= sig_hex then
+      return false
    end
-   return false
+
+   yy, mm, dd, duration = name:match("(..)(..)(..)-([^-]+)")
+   start = os.time{year=2000+yy, month=mm, day=dd}
+   delta = os.time() - start
+   if delta > duration * 86400 then
+      dbg("expired")
+      return false
+   end
+
+   return true
 end
 
 
@@ -137,6 +128,8 @@ end, 10);
 
 dbg("hello");
 
-x = valid_room("Hello200608_085f738c", "xyzzy");
+x = valid_room("xyzzy", "Hello200608-10_4fbc3d3b");
 dbg(string.format("valid? %s", x));
 
+x = valid_room("xyzzy", "Hello200526-10_df6594ed");
+dbg(string.format("valid? %s", x));
