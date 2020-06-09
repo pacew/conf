@@ -9,16 +9,16 @@ import datetime
 
 secret = "xyzzy"
 
-def mkmeeting(basename_raw, secret):
+def mkmeeting(secret, basename_arg, duration):
     # delete all but alnum and dash
-    basename = re.sub(r'[^-a-zA-Z0-9]', '', basename_raw)
+    basename = re.sub(r'[^-a-zA-Z0-9]', '', basename_arg)
 
     today = datetime.date.today()
     yy = today.year % 100
     mm = today.month
     dd = today.day
 
-    name = f"{basename}{yy:02d}{mm:02d}{dd:02d}"
+    name = f"{basename}{yy:02d}{mm:02d}{dd:02d}-{duration:d}"
 
     msg = bytes(name.lower(), 'utf-8')
     h = hmac.new(bytes(secret, 'utf-8'), msg, 'sha1').digest()
@@ -27,7 +27,7 @@ def mkmeeting(basename_raw, secret):
     room_name = name + "_" + sig_hex
     return room_name
 
-def ckmeeting(room_name, secret):
+def ckmeeting(secret, room_name):
     parts = room_name.split('_')
     if len(parts) != 2:
         return False
@@ -48,24 +48,28 @@ def ckmeeting(room_name, secret):
     if not hmac.compare_digest (received, computed):
         return False
 
-    parts = re.search(r'.*([0-9][0-9])([0-9][0-9])([0-9][0-9])$', name)
+    print(name)
+    parts = re.search(r'.*([0-9][0-9])([0-9][0-9])([0-9][0-9])-([0-9]+)$', name)
     yy = int(parts.group(1))
     mm = int(parts.group(2))
     dd = int(parts.group(3))
-
+    duration = int(parts.group(4))
+    
     d = datetime.date(2000+yy, mm, dd)
-    delta = d - datetime.date.today()
-    limit = datetime.timedelta(10)
+    limit = datetime.timedelta(duration)
+    print(d, limit)
+    
+    delta = datetime.date.today() - d
     if delta > limit:
         return False
 
     return True
     
-m = mkmeeting("Hello", secret)
+m = mkmeeting(secret, "Hello", 10)
 print(m)
 url = f"https://jitsi.pacew.org/{m}"
 print(url)
 
-print(ckmeeting(m, secret))
+print(ckmeeting(secret, m))
 
 
