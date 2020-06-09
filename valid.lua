@@ -16,14 +16,15 @@ end
 
 
 function valid_room(secret, room_name)
-   parts = string.gmatch(room_name, "[^_]+")
-   name = string.lower(parts(1))
-   sig_hex = parts(2)
+   print("valid_room?", room_name)
+   msg = string.lower(string.sub(room_name, 1, -9))
+   sig_hex = string.sub(room_name, -8);
+   print(msg, sig_hex)
 
    status, received = pcall (function () return fromhex(sig_hex) end);
    print(tohex(received))
    if status then
-      computed = sha1.hmac(secret, name);
+      computed = sha1.hmac(secret, msg);
       computed = string.sub(computed, 1, 8)
 
       if computed ~= sig_hex then
@@ -31,9 +32,11 @@ function valid_room(secret, room_name)
       end
    end
 
-   print(name)
-   yy, mm, dd, duration = name:match("(..)(..)(..)-([^-]+)")
-   start = os.time{year=2000+yy, month=mm, day=dd}
+   print("sig ok")
+
+   yyyy, mm, dd, duration = msg:match(".*(....)(..)(..)x(..)x")
+   print(yyyy, mm, dd, duration)
+   start = os.time{year=yyyy, month=mm, day=dd}
    delta = os.time() - start
    if delta > duration * 86400 then
       print("expired")
@@ -43,10 +46,12 @@ function valid_room(secret, room_name)
    return true
 end
 
-val = valid_room("xyzzy", "Hello200608-10_4fbc3d3b")
+val = valid_room("xyzzy", "Hello20200608x10x455425f7")
+print(val)
+print("")
+
+val = valid_room("xyzzy", "Hello20200526x10x90f103d6")
 print(val)
 
-val = valid_room("xyzzy", "Hello200526-10_df6594ed")
-print(val)
 
 

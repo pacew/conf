@@ -35,13 +35,12 @@ end
 
 
 local function valid_room(secret, room_name)
-   parts = string.gmatch(room_name, "[^_]+")
-   name = string.lower(parts(1))
-   sig_hex = parts(2)
+   msg = string.lower(string.sub(room_name, 1, -9))
+   sig_hex = string.sub(room_name, -8);
 
-   dbg(string.format("name %s  sig %s", name, sig_hex));
+   dbg(string.format("msg %s  sig %s", msg, sig_hex));
 
-   computed = hashes.hmac_sha1(secret, name);
+   computed = hashes.hmac_sha1(secret, msg);
    computed = tohex(string.sub(computed, 1, 4))
 
    dbg(string.format("computed %s", computed));
@@ -50,8 +49,8 @@ local function valid_room(secret, room_name)
       return false
    end
 
-   yy, mm, dd, duration = name:match("(..)(..)(..)-([^-]+)")
-   start = os.time{year=2000+yy, month=mm, day=dd}
+   yyyy, mm, dd, duration = msg:match(".*(....)(..)(..)x(..)x")
+   start = os.time{year=yyyy, month=mm, day=dd}
    delta = os.time() - start
    if delta > duration * 86400 then
       dbg("expired")
@@ -110,7 +109,7 @@ module:hook("presence/full", function(event)
 
         dbg(string.format("error", "** room %s", rname));
 
-	if valid_room(rname, "xyzzy") then
+	if valid_room('xyzzy', rname) then
 	   dbg(string.format("error", "** good room %s", rname));
 	   return
 	end
@@ -128,8 +127,8 @@ end, 10);
 
 dbg("hello");
 
-x = valid_room("xyzzy", "Hello200608-10_4fbc3d3b");
-dbg(string.format("valid? %s", x));
+val = valid_room("xyzzy", "Hello20200608x10x455425f7")
+dbg(string.format("valid? %s", val));
 
-x = valid_room("xyzzy", "Hello200526-10_df6594ed");
-dbg(string.format("valid? %s", x));
+val = valid_room("xyzzy", "Hello20200526x10x90f103d6")
+dbg(string.format("valid? %s", val));
