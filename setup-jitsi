@@ -6,7 +6,7 @@ import subprocess
 import shlex
 import re
 
-jhost = "jitsi.pacew.org"
+jhost = "jitsi1.pacew.org"
 
 yes_flag = False
 
