@@ -120,7 +120,7 @@ def fix_apache_cfg():
 
 def setup_certs():
     cleanup_certs()
-    fix_prosody_cfg()
+#    fix_prosody_cfg()
     fix_apache_cfg()
 
 def add_extensions():
