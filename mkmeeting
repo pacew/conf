@@ -76,7 +76,7 @@ def ckmeeting(secret, room_name):
     
 m = mkmeeting(secret, "Hello", 10)
 print(m)
-url = f"https://jitsi.pacew.org/{m}"
+url = f"https://jitsi1.pacew.org/{m}"
 print(url)
 print(ckmeeting(secret, m))
 

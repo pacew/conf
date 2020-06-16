@@ -6,7 +6,8 @@ import subprocess
 import shlex
 import re
 
-jhost = "jitsi1.pacew.org"
+#jhost = "jitsi1.pacew.org"
+jhost = "a1.pacew.com"
 
 yes_flag = False
 
@@ -44,26 +45,16 @@ def kill_file(name):
         run(f"sudo rm -f {name}")
 
 def cleanup_certs():
-    if not os.access("/etc/prosody/certs", os.R_OK):
-        run("sudo chmod a+rx /etc/prosody/certs")
-        sys.exit(1)
-    kill_file("/etc/prosody/certs/localhost.crt")
-    kill_file("/etc/prosody/certs/localhost.key")
-
-    kill_file(f"/etc/prosody/certs/{jhost}.crt")
-    kill_file(f"/etc/prosody/certs/{jhost}.key")
-    kill_file(f"/etc/prosody/certs/auth.{jhost}.crt")
-    kill_file(f"/etc/prosody/certs/auth.{jhost}.key")
-
-    if not os.access("/var/lib/prosody", os.R_OK):
-        run("sudo chmod a+rx /var/lib/prosody")
-        sys.exit(1)
-
-    kill_file(f"/var/lib/prosody/{jhost}.crt")
-    kill_file(f"/var/lib/prosody/{jhost}.key")
-    kill_file(f"/var/lib/prosody/auth.{jhost}.crt")
-    kill_file(f"/var/lib/prosody/auth.{jhost}.key")
-        
+#    kill_file("/etc/prosody/certs/localhost.crt")
+#    kill_file("/etc/prosody/certs/localhost.key")
+#    kill_file(f"/etc/prosody/certs/{jhost}.crt")
+#    kill_file(f"/etc/prosody/certs/{jhost}.key")
+#    kill_file(f"/etc/prosody/certs/auth.{jhost}.crt")
+#    kill_file(f"/etc/prosody/certs/auth.{jhost}.key")
+#    kill_file(f"/var/lib/prosody/{jhost}.crt")
+#    kill_file(f"/var/lib/prosody/{jhost}.key")
+#    kill_file(f"/var/lib/prosody/auth.{jhost}.crt")
+#    kill_file(f"/var/lib/prosody/auth.{jhost}.key")
     kill_file(f"/etc/jitsi/meet/{jhost}.crt")
     kill_file(f"/etc/jitsi/meet/{jhost}.key")
 
@@ -129,11 +120,6 @@ def fix_apache_cfg():
 
 def setup_certs():
     cleanup_certs()
-    
-    if not os.access("/etc/prosody/conf.avail", os.X_OK):
-        run("sudo chmod a+rx /etc/prosody/conf.*")
-        sys.exit(1)
-
     fix_prosody_cfg()
     fix_apache_cfg()
 
@@ -144,6 +130,24 @@ def add_extensions():
     if not os.path.exists(dest):
         cmd = f"sudo ln -s `pwd`/{name} {dest}"
         run(cmd)
+
+def fix_perms():
+    stop = False
+    if not os.access("/etc/prosody/certs", os.R_OK):
+        run("sudo chmod a+rx /etc/prosody/certs")
+        stop = True
+        
+    if not os.access("/var/lib/prosody", os.R_OK):
+        run("sudo chmod a+rx /var/lib/prosody")
+        stop = True
+        
+    if not os.access("/etc/prosody/conf.avail", os.X_OK):
+        run("sudo chmod a+rx /etc/prosody/conf.*")
+        stop = True
+
+    if stop:
+        sys.exit(1)
+
 
 def main():
     global yes_flag
@@ -164,6 +168,7 @@ def main():
         print("sudo apt install jitsi-meet")
         sys.exit(0)
 
+    fix_perms()
     setup_certs()
     add_extensions()
 
